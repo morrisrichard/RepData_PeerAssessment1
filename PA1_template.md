@@ -7,13 +7,15 @@ output:
 
 ## Loading and pre-processing the data
 Here we simply load the data. Relevant preprocessing will be undertaken immediately prior to creating charts and making calculations. 
-```{r read, echo = TRUE, }
+
+```r
 data <- read.csv("./data/activity.csv")
 ```
 
 ## What is the mean total number of steps taken per day?
 We make the necessary calculations then create a histogram showing the total number of steps taken each day.
-```{r histogram, echo = TRUE, results = "hide", message = FALSE, fig.height = 4}
+
+```r
 library(dplyr)
 data_grouped <- group_by(data, date)
 daily <- summarize(data_grouped, steps = sum(steps, na.rm = FALSE))
@@ -23,20 +25,24 @@ hist(daily$steps, breaks = 20,
      col = "blue")
 ```
 
+![](PA1_template_files/figure-html/histogram-1.png)<!-- -->
+
 Now we calculate the mean and median number of steps taken each day.
-```{r mean, echo = TRUE}
+
+```r
 options(digits = 0, scipen = 999)
 mean <- mean(daily$steps, na.rm = TRUE)
 median <- median(daily$steps, na.rm = TRUE)
 ```
-The mean number of steps taken each day is `r mean`. 
-The median number of steps taken each day is `r median`.
+The mean number of steps taken each day is 10766. 
+The median number of steps taken each day is 10765.
 
 Note that this result occurs when we "completely" ignore those days for which there are no obvservations. If we would include those days as having "zero" steps, the mean and median would be lower. 
 
 ##What is the average daily activity pattern?
 We create a time series plot of the average number of steps taken at intervals during the day.
-```{r time_series, echo = TRUE, warning = FALSE, message = FALSE}
+
+```r
 library(dplyr)
 data_int <- group_by(data, interval)
 int <- summarize(data_int, steps = mean(steps, na.rm = TRUE))
@@ -55,21 +61,26 @@ g + geom_line(colour = "blue", group = 1) +
       scale_x_datetime(date_labels = "%H:%M")
 ```
 
+![](PA1_template_files/figure-html/time_series-1.png)<!-- -->
+
 Now we find the 5-minute interval that, on average, contains the maximum number of steps.
-```{r interval, echo = TRUE, message = FALSE}
+
+```r
 max <- filter(int, steps == max(steps, na.rm = TRUE)) 
 answer <- max$time[1]
 ```
-The 5-minute interval that, on average, contains the maximum number of steps is the one that starts at `r answer`.
+The 5-minute interval that, on average, contains the maximum number of steps is the one that starts at 08:35.
 
 ##Imputing missing data
-```{r missing, echo = TRUE, message = FALSE}
+
+```r
 missing <- sum(is.na(data$steps))  
 ```
-Our original dataset contains `r missing` missing values.
+Our original dataset contains 2304 missing values.
 
 To deal with the missing data, we compute the average steps taken for each time interval on each day of the week. If a value is missing we then impute with the average values from the same weekday and time interval in other weeks. 
-```{r impute, echo = TRUE, message = FALSE}
+
+```r
 data_imp <- data
 # We add the days of the week to our data
 data_imp$day <- weekdays(as.Date(data_imp$date))
@@ -88,28 +99,35 @@ for (i in 1:17568) {
 # Finally we check we have actually removed all missing values
 check <- sum(is.na(data_imp$steps))  
 ```
-After checking, we verify that our new dataset contains `r check` missing values.
+After checking, we verify that our new dataset contains 0 missing values.
 
 We make another histogram of the total number of steps taken each day after missing values have been imputed.
-```{r histogram_imp, echo = TRUE, message = FALSE, fig.height = 4}
+
+```r
 data_imp <- group_by(data_imp, date)
 daily_imp <- summarize(data_imp, steps = sum(steps))
 hist(daily_imp$steps, breaks = 20,
      main = "Histogram of number of steps taken each day",
      xlab = "Number of steps",
      col = "blue")
+```
+
+![](PA1_template_files/figure-html/histogram_imp-1.png)<!-- -->
+
+```r
 options(digits = 0, scipen = 999)
 mean_imp <- mean(daily_imp$steps, na.rm = TRUE)
 median_imp <- median(daily_imp$steps, na.rm = TRUE)
 ```
-The mean number of steps taken each day after imputing missing values is `r mean_imp`. 
-The median number of steps taken each day after imputing missing values is `r median_imp`.  
+The mean number of steps taken each day after imputing missing values is 10821. 
+The median number of steps taken each day after imputing missing values is 11015.  
 The total number of steps thus increases, as we would expect, after imputing missing values. The histogram also resembles slighty more a normal distribution. 
 
 
 ##Are there differences in activity patterns between weekdays and weekends?
 We create a panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekend.
-```{r time_series_imp, echo = TRUE, warning = FALSE, message = FALSE}
+
+```r
 data_imp$weekday <- NA
 for (i in 1:17568) {
       if(data_imp$day[i] == "Saturday" | data_imp$day[i] == "Sunday" )
@@ -133,6 +151,8 @@ g + geom_line(colour = "blue") +
       scale_x_datetime(date_labels = "%H:%M") +
       facet_wrap(~ weekday, nrow = 2)
 ```
+
+![](PA1_template_files/figure-html/time_series_imp-1.png)<!-- -->
 
 
 We can see how activity on weekdays peakes strongly during the morning rushour and is then much lower during the rest of the day (although there are also peaks during the lunch and afternoon rush hours). At the weekend, activity picks up later in the morning and is more spread out over the course of the day.
